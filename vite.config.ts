@@ -19,7 +19,7 @@ export default defineConfig({
   },
   envDir: path.resolve(import.meta.dirname),
   root: path.resolve(import.meta.dirname, "client"),
-  base: "/network-topology-trainer/",
+  base: process.env.NODE_ENV === "production" ? "/network-topology-trainer/" : "/",
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,

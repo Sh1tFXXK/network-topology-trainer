@@ -41,6 +41,9 @@ jobs:
       - name: Create 404.html for SPA routing
         run: cp dist/public/index.html dist/public/404.html
 
+      - name: Add .nojekyll file
+        run: touch dist/public/.nojekyll
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
