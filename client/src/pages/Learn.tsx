@@ -21,6 +21,11 @@ import {
   ArrowRight,
   Zap
 } from 'lucide-react';
+import FullTransmission from '../../../协议如何体现在数据传输中/FullTransmission';
+import RouterSimulator from '../../../协议如何体现在数据传输中/RouterSimulator';
+import NATGateway from '../../../协议如何体现在数据传输中/NATGateway';
+import TCPFlowControl from '../../../协议如何体现在数据传输中/TCPFlowControl';
+import DataTransmissionVisualizer from '../../../协议如何体现在数据传输中/DataTransmissionVisualizer';
 
 // OSI 模型层级数据
 const osiLayers = [
@@ -495,6 +500,33 @@ export default function Learn() {
                           <p className="text-sm text-muted-foreground">
                             将 IP 地址解析为 MAC 地址。当设备需要发送数据时，使用 ARP 查找目标设备的物理地址。
                           </p>
+                        </div>
+                      </div>
+                    </section>
+
+                    <section>
+                      <h3 className="text-lg font-bold text-cyan-400 mb-4">协议如何体现在数据传输中</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        下面的交互式组件展示了从应用层到物理层完整的数据传输过程，以及路由器、NAT 网关和 TCP 流量控制等关键机制。
+                      </p>
+                      <div className="space-y-6">
+                        <div className="space-y-4">
+                          <h4 className="text-base font-semibold text-cyan-400">数据传输全流程</h4>
+                          <FullTransmission />
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          <RouterSimulator />
+                          <NATGateway />
+                          <TCPFlowControl />
+                        </div>
+                        <div className="space-y-4">
+                          <h4 className="text-base font-semibold text-emerald-400">基于拓扑的数据传输可视化</h4>
+                          <p className="text-xs text-muted-foreground">
+                            在拓扑编辑器中配置好 PC 和服务器等终端设备后，可以使用下方组件选择源和目标设备，观察协议在真实拓扑上的封装、传输和解封装过程。
+                          </p>
+                          <div className="min-h-[420px]">
+                            <DataTransmissionVisualizer />
+                          </div>
                         </div>
                       </div>
                     </section>

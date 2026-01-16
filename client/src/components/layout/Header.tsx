@@ -53,6 +53,7 @@ export default function Header() {
   const navItems = [
     { href: '/', label: '拓扑编辑器', icon: Network },
     { href: '/learn', label: '知识库', icon: BookOpen },
+    { href: '/network-center', label: '可视化中心', icon: RotateCcw },
   ];
 
   return (
