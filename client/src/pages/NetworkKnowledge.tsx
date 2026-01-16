@@ -16,13 +16,23 @@ import {
 } from 'lucide-react';
 
 // 导入各个可视化组件
-import RouterSimulator from '../../../协议如何体现在数据传输中/RouterSimulator';
-import SwitchSimulator from '../../../协议如何体现在数据传输中/SwitchSimulator';
-import NATGateway from '../../../协议如何体现在数据传输中/NATGateway';
-import DNSResolver from '../../../协议如何体现在数据传输中/DNSResolver';
-import ARPResolver from '../../../协议如何体现在数据传输中/ARPResolver';
-import TCPFlowControl from '../../../协议如何体现在数据传输中/TCPFlowControl';
-import FullTransmission from '../../../协议如何体现在数据传输中/FullTransmission';
+import DNSResolver from '@/components/protocols/DNSResolver';
+import HTTPFlow from '@/components/protocols/HTTPFlow';
+import TCPHandshake from '@/components/protocols/TCPHandshake';
+
+// Placeholder components for missing features
+const Placeholder = ({ name }: { name: string }) => (
+  <div className="flex items-center justify-center h-full min-h-[400px] border border-dashed border-slate-700 rounded-xl bg-slate-900/30 text-slate-500 font-mono">
+    {name} 模块开发中...
+  </div>
+);
+
+const FullTransmission = () => <HTTPFlow />;
+const RouterSimulator = () => <Placeholder name="路由器模拟" />;
+const SwitchSimulator = () => <Placeholder name="交换机模拟" />;
+const NATGateway = () => <Placeholder name="NAT 网关" />;
+const ARPResolver = () => <Placeholder name="ARP 解析" />;
+const TCPFlowControl = () => <TCPHandshake />;
 
 // 知识模块定义
 interface KnowledgeModule {

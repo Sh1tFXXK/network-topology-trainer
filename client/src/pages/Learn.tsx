@@ -21,11 +21,22 @@ import {
   ArrowRight,
   Zap
 } from 'lucide-react';
-import FullTransmission from '../../../协议如何体现在数据传输中/FullTransmission';
-import RouterSimulator from '../../../协议如何体现在数据传输中/RouterSimulator';
-import NATGateway from '../../../协议如何体现在数据传输中/NATGateway';
-import TCPFlowControl from '../../../协议如何体现在数据传输中/TCPFlowControl';
-import DataTransmissionVisualizer from '../../../协议如何体现在数据传输中/DataTransmissionVisualizer';
+import DNSResolver from '@/components/protocols/DNSResolver';
+import HTTPFlow from '@/components/protocols/HTTPFlow';
+import TCPHandshake from '@/components/protocols/TCPHandshake';
+
+// Placeholder components for missing features
+const Placeholder = ({ name }: { name: string }) => (
+  <div className="flex items-center justify-center h-48 border border-dashed border-border/50 rounded-lg bg-slate-900/30 text-muted-foreground font-mono">
+    {name} 模块开发中...
+  </div>
+);
+
+const FullTransmission = () => <HTTPFlow />;
+const RouterSimulator = () => <Placeholder name="路由器模拟" />;
+const NATGateway = () => <Placeholder name="NAT 网关" />;
+const TCPFlowControl = () => <TCPHandshake />;
+const DataTransmissionVisualizer = () => <Placeholder name="拓扑数据传输" />;
 
 // OSI 模型层级数据
 const osiLayers = [
