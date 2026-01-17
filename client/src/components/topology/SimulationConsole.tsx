@@ -49,10 +49,11 @@ export default function SimulationConsole() {
   const [activeTab, setActiveTab] = useState<'simulation' | 'transmission'>('simulation');
   const [dataContent, setDataContent] = useState<string>('');
 
-  // 获取可用的终端设备（PC 和服务器）
+  // 获取所有设备（包括终端、路由器和交换机）
   const endpoints = nodes.filter((n) => {
     const data = n.data as { type?: string };
-    return data.type === 'pc' || data.type === 'server';
+    // 允许所有设备类型参与模拟，或者根据需要过滤
+    return true; 
   });
 
   const handleStartSimulation = () => {
@@ -83,7 +84,7 @@ export default function SimulationConsole() {
   };
 
   // 计算高度 - 数据传输可视化需要更大的空间
-  const consoleHeight = activeTab === 'transmission' ? 'h-[500px]' : 'h-64';
+  const consoleHeight = activeTab === 'transmission' ? 'h-[500px]' : 'h-80';
 
   return (
     <div

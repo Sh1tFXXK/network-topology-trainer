@@ -118,6 +118,14 @@ interface TopologyState {
   // 可视化中心状态
   isVisualizationCenterOpen: boolean;
   setVisualizationCenterOpen: (open: boolean) => void;
+
+  // 激活的模拟器（路由器/交换机）
+  activeSimulator: {
+    nodeId: string | null;
+    packetId: string | null;
+    type: 'router' | 'switch' | null;
+  };
+  setActiveSimulator: (simulator: TopologyState['activeSimulator']) => void;
 }
 
 // 生成默认设备数据
@@ -188,6 +196,11 @@ const initialState = {
     logs: [],
   } as SimulationState,
   isVisualizationCenterOpen: false,
+  activeSimulator: {
+    nodeId: null,
+    packetId: null,
+    type: null,
+  },
 };
 
 function getNodeLabel(nodes: Node[], nodeId: string) {
@@ -272,6 +285,9 @@ export const useTopologyStore = create<TopologyState>((set, get) => ({
 
   // 可视化中心操作
   setVisualizationCenterOpen: (open) => set({ isVisualizationCenterOpen: open }),
+
+  // 设置激活的模拟器
+  setActiveSimulator: (simulator) => set({ activeSimulator: simulator }),
 
   // 添加节点
   addNode: (type, position) => {

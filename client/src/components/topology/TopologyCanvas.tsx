@@ -28,7 +28,10 @@ import { useTopologyStore, type DeviceType, type DeviceData } from '@/store/topo
 import DeviceNode from './DeviceNode';
 import PacketDetails from './PacketDetails';
 import PacketAnimation from './PacketAnimation';
+import RouterSimulator from './RouterSimulator';
+import SwitchSimulator from './SwitchSimulator';
 import { useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 
 // 自定义节点类型
 const nodeTypes = {
@@ -61,6 +64,7 @@ export default function TopologyCanvas() {
     removeEdge,
     selectNode,
     selectedNodeId,
+    activeSimulator,
   } = useTopologyStore(
     useShallow((state) => ({
       storeNodes: state.nodes,
@@ -73,6 +77,7 @@ export default function TopologyCanvas() {
       removeEdge: state.removeEdge,
       selectNode: state.selectNode,
       selectedNodeId: state.selectedNodeId,
+      activeSimulator: state.activeSimulator,
     }))
   );
 
@@ -237,6 +242,33 @@ export default function TopologyCanvas() {
         {/* 数据包详情 */}
         <PacketDetails />
         <PacketAnimation />
+
+        {/* 设备模拟器悬浮窗 */}
+        <AnimatePresence>
+          {activeSimulator.nodeId && (
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="absolute top-4 right-4 z-50 w-[500px] shadow-2xl"
+            >
+              {activeSimulator.type === 'router' ? (
+                <RouterSimulator 
+                  routerId={nodes.find(n => n.id === activeSimulator.nodeId)?.data.label as string}
+                  highlightDestination={
+                    // 从 PacketDetails 获取目标 IP (如果有)
+                    // 这里可以简化，直接传 packet 进去，在组件内解析
+                    undefined
+                  }
+                />
+              ) : (
+                <SwitchSimulator 
+                  switchId={nodes.find(n => n.id === activeSimulator.nodeId)?.data.label as string}
+                />
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* 提示面板 */}
         {nodes.length === 0 && (

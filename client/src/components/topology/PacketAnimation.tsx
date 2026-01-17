@@ -60,7 +60,7 @@ function PacketDot({ packet, pathIndex }: PacketDotProps) {
 }
 
 export default function PacketAnimation() {
-  const { simulation, nodes, edges, addLog } = useTopologyStore();
+  const { simulation, nodes, edges, addLog, setActiveSimulator } = useTopologyStore();
   const [animatingPackets, setAnimatingPackets] = useState<Map<string, number>>(new Map());
 
   useEffect(() => {
@@ -90,13 +90,29 @@ export default function PacketAnimation() {
           } else {
             next.set(packet.id, nextIndex);
             const currentNode = nodes.find((n) => n.id === packet.path[nextIndex]);
+            
             if (currentNode) {
-              const data = currentNode.data as { label?: string };
+              const data = currentNode.data as { label?: string; type?: string };
               addLog({
                 type: 'info',
                 message: `数据包经过 ${data.label}`,
                 nodeId: packet.path[nextIndex],
               });
+
+              // 触发设备模拟器
+              if (data.type === 'router' || data.type === 'switch') {
+                setActiveSimulator({
+                  nodeId: currentNode.id,
+                  packetId: packet.id,
+                  type: data.type as 'router' | 'switch',
+                });
+              } else {
+                setActiveSimulator({
+                  nodeId: null,
+                  packetId: null,
+                  type: null,
+                });
+              }
             }
           }
         });

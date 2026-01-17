@@ -251,6 +251,13 @@ export const RouterSimulator: React.FC<RouterSimulatorProps> = ({
   useEffect(() => {
     if (highlightDestination) {
       setQueryIp(highlightDestination);
+      // 自动切换到查询标签页
+      setActiveTab('query');
+      // 稍微延迟后自动触发查询
+      const timer = setTimeout(() => {
+        handleQuery();
+      }, 500);
+      return () => clearTimeout(timer);
     }
   }, [highlightDestination]);
 

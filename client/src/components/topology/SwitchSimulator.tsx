@@ -48,6 +48,7 @@ interface ForwardDecision {
 interface SwitchSimulatorProps {
   switchId?: string;
   onForwardDecision?: (decision: ForwardDecision) => void;
+  targetMac?: string; // 新增：目标 MAC
 }
 
 // 默认MAC地址表
@@ -80,7 +81,8 @@ const stpStateColors: Record<string, string> = {
 
 export const SwitchSimulator: React.FC<SwitchSimulatorProps> = ({
   switchId = 'SW1',
-  onForwardDecision
+  onForwardDecision,
+  targetMac
 }) => {
   const [macTable, setMACTable] = useState<MACEntry[]>(defaultMACTable);
   const [ports, setPorts] = useState<PortInfo[]>(defaultPorts);
@@ -91,7 +93,17 @@ export const SwitchSimulator: React.FC<SwitchSimulatorProps> = ({
   const [highlightedEntry, setHighlightedEntry] = useState<string | null>(null);
   const [learningDemo, setLearningDemo] = useState<{step: number; steps: string[]} | null>(null);
 
-  // MAC地址老化模拟
+  // 自动触发查询逻辑
+  useEffect(() => {
+    if (targetMac) {
+      setQueryMac(targetMac);
+      setActiveTab('forward');
+      const timer = setTimeout(() => {
+        handleQuery();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [targetMac]);
   useEffect(() => {
     const timer = setInterval(() => {
       setMACTable(prev => prev.map(entry => {
