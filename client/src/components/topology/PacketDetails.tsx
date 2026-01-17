@@ -21,7 +21,9 @@ const layerInfo = [
 
 export default function PacketDetails() {
   const { simulation, nodes } = useTopologyStore();
-  const activePacket = simulation.packets.find((p) => p.status === 'traveling');
+  const activePacket =
+    simulation.packets.find((p) => p.status === 'traveling') ??
+    simulation.packets[simulation.packets.length - 1];
 
   if (!activePacket) {
     return null;
@@ -52,6 +54,19 @@ export default function PacketDetails() {
             activePacket.protocol === 'ARP' && 'bg-pink-500/20 text-pink-400'
           )}>
             {activePacket.protocol}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono mb-3">
+          <span>
+            跳数 {Math.min(activePacket.hopIndex + 1, activePacket.path.length)}/{activePacket.path.length}
+          </span>
+          <span>
+            {activePacket.status === 'traveling'
+              ? '传输中'
+              : activePacket.status === 'arrived'
+                ? '已到达'
+                : '失败'}
           </span>
         </div>
 

@@ -39,9 +39,18 @@ export interface PacketInfo {
   sourceId: string;
   targetId: string;
   protocol: 'ICMP' | 'TCP' | 'UDP' | 'ARP';
+  payload?: string;
   currentNodeId: string;
+  hopIndex: number;
   path: string[];
   status: 'traveling' | 'arrived' | 'failed';
+  lastLayers?: {
+    application?: string;
+    transport?: string;
+    network?: string;
+    dataLink?: string;
+    physical?: string;
+  };
   layers: {
     application?: string;
     transport?: string;
@@ -96,14 +105,19 @@ interface TopologyState {
   selectEdge: (id: string | null) => void;
   
   // 模拟操作
-  startSimulation: (sourceId: string, targetId: string, protocol: PacketInfo['protocol']) => void;
+  startSimulation: (sourceId: string, targetId: string, protocol: PacketInfo['protocol'], payload?: string) => void;
   stopSimulation: () => void;
+  advanceSimulationStep: () => void;
   setSimulationSpeed: (speed: number) => void;
   addLog: (log: Omit<SimulationLog, 'id' | 'timestamp'>) => void;
   clearLogs: () => void;
   
   // 重置
   reset: () => void;
+
+  // 可视化中心状态
+  isVisualizationCenterOpen: boolean;
+  setVisualizationCenterOpen: (open: boolean) => void;
 }
 
 // 生成默认设备数据
@@ -173,10 +187,91 @@ const initialState = {
     packets: [],
     logs: [],
   } as SimulationState,
+  isVisualizationCenterOpen: false,
 };
+
+function getNodeLabel(nodes: Node[], nodeId: string) {
+  const node = nodes.find((n) => n.id === nodeId);
+  const data = node?.data as { label?: string } | undefined;
+  return data?.label || nodeId;
+}
+
+function getNodeIp(nodes: Node[], nodeId: string) {
+  const node = nodes.find((n) => n.id === nodeId);
+  const data = node?.data as { ip?: string } | undefined;
+  return data?.ip;
+}
+
+function getNodeMac(nodes: Node[], nodeId: string) {
+  const node = nodes.find((n) => n.id === nodeId);
+  const data = node?.data as { mac?: string } | undefined;
+  if (data?.mac) return data.mac;
+
+  const hex = nodeId.replace(/[^a-fA-F0-9]/g, "").padEnd(12, "0").slice(0, 12).toUpperCase();
+  const parts = hex.match(/.{1,2}/g) || [];
+  return parts.slice(0, 6).join(":").padEnd(17, "0");
+}
+
+function buildPacketLayers(params: {
+  protocol: PacketInfo["protocol"];
+  hopIndex: number;
+  path: string[];
+  nodes: Node[];
+  sourceId: string;
+  targetId: string;
+  payload?: string;
+}) {
+  const { protocol, hopIndex, path, nodes, sourceId, targetId, payload } = params;
+  const ttl = Math.max(1, 64 - hopIndex);
+  const currentNodeId = path[hopIndex];
+  const nextNodeId = path[Math.min(hopIndex + 1, path.length - 1)];
+
+  const sourceIp = getNodeIp(nodes, sourceId) || "unknown";
+  const targetIp = getNodeIp(nodes, targetId) || "unknown";
+  const currentMac = getNodeMac(nodes, currentNodeId);
+  const nextMac = getNodeMac(nodes, nextNodeId);
+
+  if (protocol === "ARP") {
+    return {
+      application: undefined,
+      transport: undefined,
+      network: undefined,
+      dataLink: `ARP: who-has ${targetIp}? tell ${sourceIp} | ETH ${currentMac} → FF:FF:FF:FF:FF:FF`,
+      physical: "电信号/光信号",
+    };
+  }
+
+  const transport =
+    protocol === "TCP"
+      ? "TCP Segment"
+      : protocol === "UDP"
+        ? "UDP Datagram"
+        : undefined;
+
+  let application = protocol === "ICMP" ? "ICMP Echo Request" : undefined;
+  
+  if (payload) {
+    if (application) {
+      application += ` | Data: "${payload}"`;
+    } else {
+      application = `Data: "${payload}"`;
+    }
+  }
+
+  return {
+    application,
+    transport,
+    network: `IPv4: ${sourceIp} → ${targetIp} | TTL=${ttl}`,
+    dataLink: `Ethernet: ${currentMac} → ${nextMac}`,
+    physical: "电信号/光信号",
+  };
+}
 
 export const useTopologyStore = create<TopologyState>((set, get) => ({
   ...initialState,
+
+  // 可视化中心操作
+  setVisualizationCenterOpen: (open) => set({ isVisualizationCenterOpen: open }),
 
   // 添加节点
   addNode: (type, position) => {
@@ -284,7 +379,7 @@ export const useTopologyStore = create<TopologyState>((set, get) => ({
   selectEdge: (id) => set({ selectedEdgeId: id, selectedNodeId: null }),
 
   // 开始模拟
-  startSimulation: (sourceId, targetId, protocol) => {
+  startSimulation: (sourceId, targetId, protocol, payload) => {
     const { nodes, edges } = get();
     const sourceNode = nodes.find((n) => n.id === sourceId);
     const targetNode = nodes.find((n) => n.id === targetId);
@@ -308,21 +403,27 @@ export const useTopologyStore = create<TopologyState>((set, get) => ({
       return;
     }
 
+    const layers = buildPacketLayers({
+      protocol,
+      hopIndex: 0,
+      path,
+      nodes,
+      sourceId,
+      targetId,
+      payload,
+    });
+
     const packet: PacketInfo = {
       id: nanoid(8),
       sourceId,
       targetId,
       protocol,
+      payload,
       currentNodeId: sourceId,
+      hopIndex: 0,
       path,
       status: 'traveling',
-      layers: {
-        application: protocol === 'ICMP' ? 'ICMP Echo Request' : undefined,
-        transport: protocol === 'TCP' ? 'TCP SYN' : protocol === 'UDP' ? 'UDP Datagram' : undefined,
-        network: `IP: ${sourceNode.data.ip} → ${targetNode.data.ip}`,
-        dataLink: `MAC: ${sourceNode.data.mac} → ${targetNode.data.mac}`,
-        physical: '电信号/光信号',
-      },
+      layers,
     };
 
     set((state) => ({
@@ -338,6 +439,98 @@ export const useTopologyStore = create<TopologyState>((set, get) => ({
       message: `开始 ${protocol} 模拟: ${sourceNode.data.label} → ${targetNode.data.label}`,
       nodeId: sourceId,
     });
+  },
+
+  advanceSimulationStep: () => {
+    const { simulation, nodes } = get();
+    if (!simulation.isRunning) return;
+
+    const travelingPackets = simulation.packets.filter((p) => p.status === "traveling");
+    if (travelingPackets.length === 0) {
+      set((state) => ({
+        simulation: {
+          ...state.simulation,
+          isRunning: false,
+        },
+      }));
+      return;
+    }
+
+    const newLogEntries: SimulationLog[] = [];
+
+    const updatedPackets: PacketInfo[] = simulation.packets.map((packet): PacketInfo => {
+      if (packet.status !== "traveling") return packet;
+
+      const nextHopIndex = packet.hopIndex + 1;
+
+      if (nextHopIndex >= packet.path.length) {
+        return packet;
+      }
+
+      const nextNodeId = packet.path[nextHopIndex];
+
+      if (nextHopIndex === packet.path.length - 1) {
+        newLogEntries.push({
+          id: nanoid(8),
+          timestamp: new Date(),
+          type: "success",
+          message: `${packet.protocol} 数据包到达 ${getNodeLabel(nodes, nextNodeId)}`,
+          nodeId: nextNodeId,
+        });
+
+        return {
+          ...packet,
+          currentNodeId: nextNodeId,
+          hopIndex: nextHopIndex,
+          status: "arrived",
+          lastLayers: packet.layers,
+          layers: buildPacketLayers({
+            protocol: packet.protocol,
+            hopIndex: nextHopIndex,
+            path: packet.path,
+            nodes,
+            sourceId: packet.sourceId,
+            targetId: packet.targetId,
+            payload: packet.payload,
+          }),
+        } satisfies PacketInfo;
+      }
+
+      newLogEntries.push({
+        id: nanoid(8),
+        timestamp: new Date(),
+        type: "info",
+        message: `数据包经过 ${getNodeLabel(nodes, nextNodeId)} (${nextHopIndex + 1}/${packet.path.length})`,
+        nodeId: nextNodeId,
+      });
+
+      return {
+        ...packet,
+        currentNodeId: nextNodeId,
+        hopIndex: nextHopIndex,
+        lastLayers: packet.layers,
+        layers: buildPacketLayers({
+            protocol: packet.protocol,
+            hopIndex: nextHopIndex,
+            path: packet.path,
+            nodes,
+            sourceId: packet.sourceId,
+            targetId: packet.targetId,
+            payload: packet.payload,
+          }),
+      } satisfies PacketInfo;
+    });
+
+    const hasTravelingAfter = updatedPackets.some((p) => p.status === "traveling");
+
+    set((state) => ({
+      simulation: {
+        ...state.simulation,
+        isRunning: hasTravelingAfter,
+        packets: updatedPackets,
+        logs: [...newLogEntries.reverse(), ...state.simulation.logs].slice(0, 100),
+      },
+    }));
   },
 
   // 停止模拟

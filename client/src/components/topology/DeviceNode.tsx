@@ -45,11 +45,34 @@ const deviceIcons: Record<DeviceType, string> = {
   server: '/images/server-icon.png',
 };
 
+import { useShallow } from 'zustand/react/shallow';
+
 function DeviceNode({ id, data, selected }: NodeProps) {
   const deviceData = data as DeviceData;
   const { type, label, ip } = deviceData;
   const colors = deviceColors[type];
   const selectNode = useTopologyStore((state) => state.selectNode);
+  const packetHint = useTopologyStore(
+    useShallow((state) => {
+      const packet = state.simulation.packets.find((p) => p.status === 'traveling');
+      if (!packet) return null;
+      return {
+        currentNodeId: packet.currentNodeId,
+        protocol: packet.protocol,
+        path: packet.path,
+      };
+    })
+  );
+
+  const isCurrentHop = packetHint?.currentNodeId === id;
+  const isOnPath = packetHint?.path.includes(id);
+
+  const protocolColors: Record<string, string> = {
+    ICMP: 'bg-cyan-400',
+    TCP: 'bg-emerald-400',
+    UDP: 'bg-amber-400',
+    ARP: 'bg-pink-400',
+  };
 
   return (
     <div
@@ -59,10 +82,23 @@ function DeviceNode({ id, data, selected }: NodeProps) {
         colors.border,
         colors.bg,
         selected && colors.glow,
+        isOnPath && 'ring-2 ring-cyan-400/20',
+        isCurrentHop && 'ring-2 ring-cyan-400/60 shadow-[0_0_25px_rgba(0,212,255,0.35)]',
         'hover:scale-105'
       )}
       onClick={() => selectNode(id)}
     >
+      {isCurrentHop && (
+        <div className="absolute -top-2 -right-2 z-10">
+          <div
+            className={cn(
+              'w-4 h-4 rounded-full border-2 border-slate-900 shadow-[0_0_12px_rgba(255,255,255,0.15)]',
+              protocolColors[packetHint?.protocol || 'ICMP']
+            )}
+          />
+        </div>
+      )}
+
       {/* 顶部连接点 */}
       <Handle
         type="target"

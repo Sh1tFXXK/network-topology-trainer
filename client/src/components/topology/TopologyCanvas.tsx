@@ -27,6 +27,7 @@ import '@xyflow/react/dist/style.css';
 import { useTopologyStore, type DeviceType, type DeviceData } from '@/store/topologyStore';
 import DeviceNode from './DeviceNode';
 import PacketDetails from './PacketDetails';
+import PacketAnimation from './PacketAnimation';
 import { useEffect } from 'react';
 
 // 自定义节点类型
@@ -44,22 +45,36 @@ const defaultEdgeOptions = {
   },
 };
 
+import { useShallow } from 'zustand/react/shallow';
+
 export default function TopologyCanvas() {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   
   const {
-    nodes: storeNodes,
-    edges: storeEdges,
-    setNodes: setStoreNodes,
-    setEdges: setStoreEdges,
+    storeNodes,
+    storeEdges,
+    setStoreNodes,
+    setStoreEdges,
     addNode,
-    addEdge: addStoreEdge,
+    addStoreEdge,
     removeNode,
     removeEdge,
     selectNode,
     selectedNodeId,
-    addLog,
-  } = useTopologyStore();
+  } = useTopologyStore(
+    useShallow((state) => ({
+      storeNodes: state.nodes,
+      storeEdges: state.edges,
+      setStoreNodes: state.setNodes,
+      setStoreEdges: state.setEdges,
+      addNode: state.addNode,
+      addStoreEdge: state.addEdge,
+      removeNode: state.removeNode,
+      removeEdge: state.removeEdge,
+      selectNode: state.selectNode,
+      selectedNodeId: state.selectedNodeId,
+    }))
+  );
 
   // 使用 React Flow 的状态管理
   const [nodes, setNodes, onNodesChange] = useNodesState(storeNodes);
@@ -221,6 +236,7 @@ export default function TopologyCanvas() {
 
         {/* 数据包详情 */}
         <PacketDetails />
+        <PacketAnimation />
 
         {/* 提示面板 */}
         {nodes.length === 0 && (

@@ -83,13 +83,13 @@ const recordTypes = [
   { type: 'TXT', description: '文本记录，用于验证等', example: 'SPF, DKIM 验证' },
 ];
 
-export default function DNSResolver() {
+export function DNSResolver() {
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [domain, setDomain] = useState('www.example.com');
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: any;
     if (isPlaying && currentStep < dnsSteps.length) {
       timer = setTimeout(() => {
         setCurrentStep(prev => prev + 1);

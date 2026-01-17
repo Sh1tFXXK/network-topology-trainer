@@ -56,7 +56,7 @@ export default function TCPHandshake() {
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: any;
     if (isPlaying && currentStep < handshakeSteps.length) {
       timer = setTimeout(() => {
         setCurrentStep(prev => prev + 1);

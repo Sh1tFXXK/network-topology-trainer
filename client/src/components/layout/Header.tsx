@@ -15,7 +15,8 @@ import {
   BookOpen, 
   RotateCcw, 
   Download,
-  Github
+  Github,
+  Zap
 } from 'lucide-react';
 import TemplateSelector from '@/components/topology/TemplateSelector';
 import { Link, useLocation } from 'wouter';
@@ -23,7 +24,7 @@ import { toast } from 'sonner';
 
 export default function Header() {
   const [location] = useLocation();
-  const { reset, nodes, edges } = useTopologyStore();
+  const { reset, nodes, edges, setVisualizationCenterOpen } = useTopologyStore();
 
   const handleReset = () => {
     if (nodes.length === 0) {
@@ -53,7 +54,6 @@ export default function Header() {
   const navItems = [
     { href: '/', label: '拓扑编辑器', icon: Network },
     { href: '/learn', label: '知识库', icon: BookOpen },
-    { href: '/network-center', label: '可视化中心', icon: RotateCcw },
   ];
 
   return (
@@ -93,6 +93,19 @@ export default function Header() {
               </Link>
             );
           })}
+          
+          {/* 可视化中心按钮 */}
+          {location === '/' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="font-mono text-sm text-cyan-400 hover:text-cyan-300 hover:bg-cyan-400/10"
+              onClick={() => setVisualizationCenterOpen(true)}
+            >
+              <Zap className="w-4 h-4 mr-1.5" />
+              可视化中心
+            </Button>
+          )}
         </nav>
       </div>
 
